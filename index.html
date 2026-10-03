@@ -382,13 +382,50 @@ const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,7);
 const westernDigits=s=>String(s??"").replace(/[٠-٩]/g,d=>"٠١٢٣٤٥٦٧٨٩".indexOf(d)).replace(/[۰-۹]/g,d=>"۰۱۲۳۴۵۶۷۸۹".indexOf(d));
 const fmt=n=>Number(n||0).toLocaleString("en-US",{maximumFractionDigits:0});
 const today=()=>{let d=new Date(),m=String(d.getMonth()+1).padStart(2,"0"),day=String(d.getDate()).padStart(2,"0");return `${d.getFullYear()}-${m}-${day}`};
-function persist(){localStorage.setItem(KEY,JSON.stringify(db));refresh()}
+function persist(){
+  try{
+    localStorage.setItem(KEY,JSON.stringify(db));
+    refresh();
+    return true;
+  }catch(e){
+    alert("تعذر حفظ البيانات على هذا الجهاز.");
+    return false;
+  }
+}
 function openPage(id){document.querySelectorAll(".page").forEach(p=>p.classList.remove("active"));$(id).classList.add("active");if(id==="transactions")prepareTransactionForm();if(id==="reports")prepareReports();if(id==="statement")prepareStatementNames();if(id==="donorStatement")prepareDonorStatement();if(id==="donationReceipt")prepareDonationReceipt();if(id==="distribution")prepareDistribution();if(id==="donations")prepareDonationsScreen();refresh();scrollTo(0,0)}
-function saveDonor(){let name=$("donorName").value.trim(),phone=westernDigits($("donorPhone").value.trim());if(!name)return alert("أدخل اسم المتبرع");if(editDonorId){let x=db.donors.find(x=>x.id===editDonorId);x.name=name;x.phone=phone}else db.donors.push({id:uid(),name,phone});cancelDonorEdit();persist()}
+function saveDonor(){
+ let name=$("donorName").value.trim(),phone=westernDigits($("donorPhone").value.trim());
+ if(!name){alert("أدخل اسم المتبرع");return;}
+ if(editDonorId){
+   let x=db.donors.find(x=>x.id===editDonorId);
+   if(x){x.name=name;x.phone=phone;}
+ }else{
+   db.donors.push({id:uid(),name,phone});
+ }
+ if(persist()){
+   cancelDonorEdit();
+   renderDonors();
+   alert("تم حفظ المتبرع بنجاح.");
+ }
+}
 function editDonor(id){let x=db.donors.find(x=>x.id===id);editDonorId=id;$("donorName").value=x.name;$("donorPhone").value=x.phone||"";$("donorFormTitle").textContent="تعديل المتبرع";scrollTo(0,0)}
 function cancelDonorEdit(){editDonorId=null;$("donorName").value="";$("donorPhone").value="";$("donorFormTitle").textContent="إضافة متبرع"}
 function deleteDonor(id){if(db.transactions.some(t=>t.donorId===id))return alert("لا يمكن حذف هذا المتبرع لوجود عمليات مسجلة باسمه.");if(confirm("هل تريد حذف المتبرع؟")){db.donors=db.donors.filter(x=>x.id!==id);persist()}}
-function saveBen(){let name=$("benName").value.trim(),phone=westernDigits($("benPhone").value.trim());if(!name)return alert("أدخل اسم المستفيد");if(editBenId){let x=db.beneficiaries.find(x=>x.id===editBenId);x.name=name;x.phone=phone}else db.beneficiaries.push({id:uid(),name,phone});cancelBenEdit();persist()}
+function saveBen(){
+ let name=$("benName").value.trim(),phone=westernDigits($("benPhone").value.trim());
+ if(!name){alert("أدخل اسم المستفيد");return;}
+ if(editBenId){
+   let x=db.beneficiaries.find(x=>x.id===editBenId);
+   if(x){x.name=name;x.phone=phone;}
+ }else{
+   db.beneficiaries.push({id:uid(),name,phone});
+ }
+ if(persist()){
+   cancelBenEdit();
+   renderBens();
+   alert("تم حفظ المستفيد بنجاح.");
+ }
+}
 function editBen(id){let x=db.beneficiaries.find(x=>x.id===id);editBenId=id;$("benName").value=x.name;$("benPhone").value=x.phone||"";$("benFormTitle").textContent="تعديل المستفيد";scrollTo(0,0)}
 function cancelBenEdit(){editBenId=null;$("benName").value="";$("benPhone").value="";$("benFormTitle").textContent="إضافة مستفيد"}
 function deleteBen(id){if(db.transactions.some(t=>t.benId===id))return alert("لا يمكن حذف هذا المستفيد لوجود عمليات مسجلة باسمه.");if(confirm("هل تريد حذف المستفيد؟")){db.beneficiaries=db.beneficiaries.filter(x=>x.id!==id);persist()}}
